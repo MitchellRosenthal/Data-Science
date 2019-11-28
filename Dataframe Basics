@@ -1,0 +1,167 @@
+### Building a dataframe ###
+
+# from a dictionary called dict_name
+df = pd.DataFrame(dict_name) 
+
+# by making a dict of pandas series
+df = pd.DataFrame({'series_name1': series_name1,
+                       'series_name2': series_name2}) 
+
+# from a list of dictionaries
+list_dicts = [{'a': 1, 'b': 2}, {'b': 3, 'c': 4}] 
+df = pd.DataFrame(list_dicts) # missing values are auto filled with NaN
+
+# from one pandas series
+df = pd.DataFrame(series_name, columns=['series_name']) 
+
+# from a 2d numpy array. 
+array = np.random.rand(3, 2) 
+df = pd.DataFrame(np.random.rand(3, 2),
+             columns=['foo', 'bar'],
+             index=['a', 'b', 'c']) # array has no names, so we have to specify colname and index
+
+# from a structured array
+StructuredArray_name = np.zeros(3, dtype=[('A', 'i8'), ('B', 'f8')]) # structured array
+df = pd.DataFrame(StructuredArray_name) 
+
+### Dataframe: add, modify columns ###
+
+# adding a column (series) as a function of other columns
+df['density'] = df['pop'] / df['area']
+
+# Renaming columns with items in list 
+list_labels = ['label 1', 'label 2', 'label 3']
+df.columns = list_labels 
+
+# Transpose df (swap rows and columns)
+df2 = df.T
+
+# convert dataframe to 2d array
+array = df.values
+
+# access first row of dataframe after conversion to array. Outputs a 1d array
+row1_array = df.values[0]
+
+
+### Dataframe: slicing ###
+
+# slice by implicit integer index
+df.iloc[:3, :2] # outputs a df w the old df's first 3 rows and first 2 columns
+df[1:3] # df with 2nd and 3rd row, all columns
+
+# Slice by explicitly defined index
+df.loc[:'c', :'pop'] # df with rows from first to 'c' (inclusive), columns from first to 'pop' (inclusive)
+df['Florida':'Illinois'] # df with rows from 'Florida' to 'Illinois', all columns
+
+# slice by a mix of implicit int index and eplicitly defined non-int index
+df.ix[:3, :'pop'] # outputs a df w the old df's first 3 rows, columns from first to 'pop'
+# note: doesn't allow for use of explicitly defined integer index
+
+# slicing using logical condition
+df.loc['density' > 100] # return rows where density > 100, all columns
+condition = ('density' > 150)
+df.loc[condition, ['pop', 'density']] # return pop and density columns for rows where condition met
+
+# modify dataframe value using implicit integer index (iloc)
+df.iloc[0, 2] = 90 # change value in first row and third column to 90
+
+# Subtract something from all dataframe columns
+df.subtract(df['R'], axis=0) # subtracts column 'r' from all df colums
+
+
+### Dataframes/Series - combine using concat and append
+
+# Combine row-wise, attaching the second one under the first (assumes shared col names)
+pd.concat([df1, df2]) # for dfs
+df1.append(df2) # for dfs. Less efficient than concat. 
+pd.concat([ser1, ser2]) # for series
+
+# Combine column-wise, attaching the second one to the right of the first (assumes shared col names)
+pd.concat([df1, df2], axis='col')) # for dfs
+pd.concat([ser1, ser2], axis='col')) # for series
+# can also use axis=1 instead of axis='col'
+
+# combine two dataframes column-wise, only adding new information
+df3 = pd.merge(df1, df2) # accounts for different orders in the dfs. The new df's order is same as df1
+
+
+### Building a series ###
+
+# Build a pandas series from a dict
+series_name2 = pd.Series({2:'a', 1:'b', 3:'c'}) # The index will be autosorted. You can specify it
+
+# Build a series from scratch with repeating values
+pd.Series(5, index=[0, 1, 2, 3]) # Creates a series with four terms. Each is equal to 5. Specifies the index and its order
+
+# build a series from a dataframe column
+series_name = df['column_name']
+series_name = df.name # assumes column name ('name') is text. Riskier, can conflict with attributes like .info
+
+### Slicing a series ###
+
+# Making a series
+series_name = pd.Series([0.25, 0.5, 0.75, 1.0],
+                 index=['a', 'b', 'c', 'd'])
+
+# slicing by implicit integer index
+
+x = series_name.iloc[1] # returns value at where implicit index equals 1 (the second value)
+x = series_name.iloc[1:3] # returns values where the implicit index equals 1 and 2 (second and third values)
+y = series_name[1:3] # outputs a new series of the values of the old series at index 1 and 2. 
+y = series_name[1:3] # even if you explicitly define an index w integers, this won't consider them! 
+x = series_name[1] # tricky: will use explicitly defined integer index if present. Use .iloc to force use of implicit index 
+
+# slicing by explicit index
+series_name['a':'c'] # final index ('c') is included
+series_name[['a', 'e']]
+
+# slicing by explicit integer index
+series_name.loc[1] # returns value at the index '1'
+series_name.loc[1:3] # returns values at index "1" and '2' and '3'. skips missing index values.
+
+# Slicing by applying logical condition (mask)
+series_name[(series_name > 0.3) & (series_name < 0.8)] # use | (instead of &) for "or" conditions]
+
+# add a value to a series
+series_name['new row name'] = 1.25
+
+# get index values of a series
+series_name.keys() 
+
+# check if series index includes something. Will output True or False. 
+'a' in series_name
+
+# Return a series index
+
+series_name.index
+
+
+### index object ###
+
+# create an explicitly defined index of integers
+ind = pd.Index([2, 3, 5, 7, 11]) 
+
+# build index from intersection of two other indexes
+indA = pd.Index([1, 3, 5, 7, 9])
+indB = pd.Index([2, 3, 5, 7, 11])
+ind_new = indA & indB 
+
+# build index from union of two other indexes
+indA = pd.Index([1, 3, 5, 7, 9])
+indB = pd.Index([2, 3, 5, 7, 11])
+ind_new = indA | indB  
+
+# find where two indexes don't intersect. 
+ind_new = indA ^ indB
+
+# return value of index at position 1
+ind[1] 
+
+# return a slice of the index: the first value, third, fifth, etc (skipping one repeatedly)
+ind[::2] 
+
+# get attributes of index
+print(ind.size, ind.shape, ind.ndim, ind.dtype) 
+
+# note: index is immutable. Cant modify it with code like ind[1] = 0. Wont work. 
+
